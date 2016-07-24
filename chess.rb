@@ -20,27 +20,27 @@ class Board
     	end 
     end
     
-    def check?(current_player_color)
+    def in_check?(current_player_color)
     	attacked_squares = []
-    	enemy_king_location = []
+    	current_player_king_location = []
     	self.board.each_with_index do |row, r_index|
     		row.each_with_index do |element, e_index|
-    			if element != nil && element.color == current_player_color
+    			if element != nil && element.color != current_player_color
     				element.attacking?(self, [0,0]).each do |square|
     					attacked_squares << square 
     				end 
     			end 
-    			if element.is_a?(King) && element.color != current_player_color
-    				enemy_king_location.push(r_index, e_index)
+    			if element.is_a?(King) && element.color == current_player_color
+    				current_player_king_location.push(r_index, e_index)
     			end 
     		end 
     	end 
-    	if attacked_squares.include?(enemy_king_location)
+    	if attacked_squares.include?(current_player_king_location)
     		return true 
     	else 
     		return false 
     	end 
-	end
+    end 
     
     
     def setup
@@ -622,19 +622,19 @@ class Game
 	def play 
 		board.display_board
 		while true 
+			if board.in_check?(current_player.color) == true 
+				puts "Check!"
+			end 
 			position_of_piece = current_player.which_piece?
 			move_to_square = current_player.to_where?
 			piece_to_move = self.board.board[position_of_piece[0]][position_of_piece[1]]
-			until piece_to_move.move(self.board, move_to_square) == true && current_player.color == piece_to_move.color 
+			until piece_to_move.move(self.board, move_to_square) == true && current_player.color == piece_to_move.color && board.in_check?(current_player.color) == false
 				puts "Please enter a valid move"
 				position_of_piece = current_player.which_piece?
 				move_to_square = current_player.to_where?
 				piece_to_move = self.board.board[position_of_piece[0]][position_of_piece[1]]
 			end 
 			board.display_board 
-			if board.check?(current_player.color) == true 
-				puts "Check!"
-			end 
 			switch_players!
 		end 
 	end 
