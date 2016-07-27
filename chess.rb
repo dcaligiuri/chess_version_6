@@ -14,11 +14,118 @@ class Board
     	@board
     end 
     
-    def empty?(square)
-    	if self.board[square[0]][square[1]] != nil 
-    		return false
+    def checkmate(current_player_color)
+    	current_player_king_location = []
+    	attacking_piece_locations = []
+    	all_attacked_squares = []
+    	all_friendly_squares = []
+    	self.board.each_with_index do |row, r_index|
+    		row.each_with_index do |element, e_index|
+    			if element.is_a?(King) && element.color == current_player_color 
+    				 current_player_king_location.push(r_index, e_index)
+    			end 
+    		end 
     	end 
-    end
+    	self.board.each_with_index do |row, r_index|
+    		row.each_with_index do |element, e_index|
+    			if element != nil && element.color != current_player_color 
+    				element.attacking?(self, [0,0]).each { |square| all_attacked_squares << square } 
+    			elsif element != nil && element.color == current_player_color && element.is_a?(King) == false 
+    				element.attacking?(self, [0,0]).each { |square| all_friendly_squares << square }
+    			end 
+    			if element != nil && element.attacking?(self, [0,0]).include?(current_player_king_location) && element.color != current_player_color
+    				attacking_piece_locations << [r_index, e_index]
+    			end 
+    		end 
+    	end 
+    	if attacking_piece_locations.length == 2 
+    		arr = board[current_player_king_location[0]][current_player_king_location[1]].attacking?(self, [0,1])
+    		arr.delete_if { |remaining_square| all_attacked_squares.include?(remaining_square) }
+    		arr.delete_if { |remaining_square| self.board[remaining_square[0]][remaining_square[1]] != nil }
+    		if arr.length == 0 
+    			return true 
+    		end 
+    	elsif attacking_piece_locations.length == 1 
+    	
+    	
+    		## you can capture, assuming none of your pieces are pinned. all friendly_squares doesn't include squares controlled by king
+    		# make sure it does for this step!
+    	
+    		if all_friendly_squares.include?(attacking_piece_locations.first)
+    			return false  
+    			
+    		# you can block 
+    		
+    		elsif self.board[attacking_piece_locations[0][0]][attacking_piece_locations[0][1]].is_a?(Queen)
+    			attack_piece = self.board[attacking_piece_locations[0][0]][attacking_piece_locations[0][1]]
+    			if attack_piece.attack_down(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_down(self, [0,0])
+    			elsif attack_piece.attack_up(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_up(self, [0,0])
+    			elsif attack_piece.attack_right(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_right(self, [0,0])
+    			elsif attack_piece.attack_left(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_left(self, [0,0]) 
+    			elsif attack_piece.attack_down_left(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_down_left(self, [0,0])
+    			elsif attack_piece.attack_down_right(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_down_right(self, [0,0]) 
+    			elsif attack_piece.attack_up_right(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_up_right(self, [0,0]) 
+    			elsif attack_piece.attack_up_left(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_up_left(self, [0,0]) 
+    			end 
+    		elsif self.board[attacking_piece_locations[0][0]][attacking_piece_locations[0][1]].is_a?(Bishop)
+    		 	if attack_piece.attack_down_left(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_down_left(self, [0,0])
+    			elsif attack_piece.attack_down_right(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_down_right(self, [0,0]) 
+    			elsif attack_piece.attack_up_right(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_up_right(self, [0,0]) 
+    			elsif attack_piece.attack_up_left(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_up_left(self, [0,0]) 
+    			end 
+    		elsif self.board[attacking_piece_locations[0][0]][attacking_piece_locations[0][1]].is_a?(Rook)
+    			if attack_piece.attack_down(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_down(self, [0,0])
+    			elsif attack_piece.attack_up(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_up(self, [0,0])
+    			elsif attack_piece.attack_right(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_right(self, [0,0])
+    			elsif attack_piece.attack_left(self, [0,0]).include?(current_player_king_location)
+    				attack_lane = attack_piece.attack_left(self, [0,0]) 
+    			end 
+    		end 
+    			attack_lane.delete(current_player_king_location)
+    			intersection = attack_lane & all_friendly_squares 
+    			puts intersection.to_s
+    
+    		
+    		
+    		
+    		 
+    		#	self.board[attacking_piece_locations[0][0]][attacking_piece_locations[0][1]].is_a?(Bishop) || 
+    		#	self.board[attacking_piece_locations[0][0]][attacking_piece_locations[0][1]].is_a?(Rook))
+    
+    	
+    		
+    		
+    		# you can move your king 
+    		
+    		arr = board[current_player_king_location[0]][current_player_king_location[1]].attacking?(self, [0,1])
+    		arr.delete_if { |remaining_square| all_attacked_squares.include?(remaining_square) }
+    		arr.delete_if { |remaining_square| self.board[remaining_square[0]][remaining_square[1]] != nil }
+    		if arr.length == 0 
+    			return true 
+    		end 
+    			
+    
+    		
+    	
+    	end 
+    end 
+
+
     
     def in_check?(current_player_color)
     	attacked_squares = []
@@ -160,6 +267,7 @@ class Piece
 		end 
 		board.board[@position[0]][@position[1]] = self 
 		self.was_moved
+
 	end 
 	
 	
@@ -330,7 +438,11 @@ class King < Piece
 			end 
 		end 
 		board.board[@position[0]][@position[1]] = self 
+		if board.in_check?(self.color) == true 
+			return false 
+		end 
 		self.was_moved
+
 	end 
 	
 	
@@ -567,7 +679,7 @@ class Player
 	def color 
 		@color
 	end 
-	
+
 	def which_piece?
 		puts "Where is the piece you want to move?"
 		piece_position = gets.chomp

@@ -14,6 +14,38 @@ class Board
     	@board
     end 
     
+    def empty?(square)
+    	if board[square[0]][square[1]] == nil 
+    		return true 
+    	else 
+    		return false
+    	end 
+    end 
+
+    
+    
+    def in_check?(current_player_color)
+    	attacked_squares = []
+    	current_player_king_location = []
+    	self.board.each_with_index do |row, r_index|
+    		row.each_with_index do |element, e_index|
+    			if element != nil && element.color != current_player_color
+    				element.attacking?(self, [0,0]).each do |square|
+    					attacked_squares << square 
+    				end 
+    			end 
+    			if element.is_a?(King) && element.color == current_player_color
+    				current_player_king_location.push(r_index, e_index)
+    			end 
+    		end 
+    	end 
+    	if attacked_squares.include?(current_player_king_location)
+    		return true 
+    	else 
+    		return false 
+    	end 
+    end 
+    
     def checkmate(current_player_color)
     	current_player_king_location = []
     	attacking_piece_locations = []
@@ -118,30 +150,6 @@ class Board
     	
     	end 
     end 
-
-
-    
-    def in_check?(current_player_color)
-    	attacked_squares = []
-    	current_player_king_location = []
-    	self.board.each_with_index do |row, r_index|
-    		row.each_with_index do |element, e_index|
-    			if element != nil && element.color != current_player_color
-    				element.attacking?(self, [0,0]).each do |square|
-    					attacked_squares << square 
-    				end 
-    			end 
-    			if element.is_a?(King) && element.color == current_player_color
-    				current_player_king_location.push(r_index, e_index)
-    			end 
-    		end 
-    	end 
-    	if attacked_squares.include?(current_player_king_location)
-    		return true 
-    	else 
-    		return false 
-    	end 
-    end 
     
     
     def setup
@@ -160,14 +168,23 @@ class Board
     	b_rook1 = Rook.new([0,7], "black")
     	b_knight1 = Knight.new([1,7], "black")
     	b_bishop1 = Bishop.new([2,7], "black")
-    	b_queen = Queen.new([3,2], "black")
+    	b_queen = Queen.new([3,7], "black")
     	b_king = King.new([4,7], "black")
     	b_bishop2 = Bishop.new([5,7], "black")
     	b_knight2 = Knight.new([6,7], "black")
     	b_rook2 = Rook.new([7,7], "black")
     	arr.push(b_rook1,b_knight1,b_bishop1,b_queen,b_king,b_bishop2,b_knight2,b_rook2)
     	arr.each {|element| self.put_on_board(element)}
-  
+    	self.board.each_with_index do |row,index1|
+    		row.each_with_index do |element, index2|
+    			if index2 == 1 
+    				self.put_on_board(Pawn.new([index1,index2] , "white"))
+    			elsif index2 == 6
+    				self.put_on_board(Pawn.new([index1,index2] , "black"))
+    			end
+    		end 
+    	end 
+    			
     end 
    
     
@@ -674,6 +691,15 @@ class Player
 		move_arr.map { |element| element.to_i }
 	end 
 	
+	def out_of_bounds?(user_input)
+		if user_input[0] > 7 || user_input[0] < 0 || user_input[1] > 7 || user_input[1] < 0 
+			return true
+		else 
+			return false
+		end 
+	end 
+
+
 
 end
 
@@ -722,18 +748,28 @@ class Game
 				break
 				end 
 			end 
-			position_of_piece = current_player.which_piece?
-			move_to_square = current_player.to_where?
-			piece_to_move = self.board.board[position_of_piece[0]][position_of_piece[1]]
-			until piece_to_move.move(self.board, move_to_square) == true && current_player.color == piece_to_move.color && board.in_check?(current_player.color) == false
-				puts "Please enter a valid move"
+			piece_to_move = false
+			until piece_to_move == true  
 				position_of_piece = current_player.which_piece?
 				move_to_square = current_player.to_where?
+				while current_player.out_of_bounds?(position_of_piece) || current_player.out_of_bounds?(move_to_square) || 
+				self.board.board[position_of_piece[0]][position_of_piece[1]] == nil || current_player.color != self.board.board[position_of_piece[0]][position_of_piece[1]].color || 
+				board.in_check?(current_player.color) 
+					puts "You can only move your own pieces, that are on the board"
+					position_of_piece = current_player.which_piece?
+					move_to_square = current_player.to_where?
+				end 
 				piece_to_move = self.board.board[position_of_piece[0]][position_of_piece[1]]
+				piece_to_move = piece_to_move.move(self.board, move_to_square)
+				puts piece_to_move.to_s
+				if piece_to_move == false 
+					puts "Please enter a valid move!" 
+				end 
 			end 
 			board.display_board 
 			switch_players!
 		end 
+	
 	end 
 	
 	
@@ -746,7 +782,5 @@ board = Board.new
 game = Game.new(player1, player2, board)
 game.setup
 game.play
-
-
 
 
